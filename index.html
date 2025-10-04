@@ -20,7 +20,7 @@
                 <h1 class="text-3xl font-bold text-center p-4 rounded-xl border-4 border-blue-300 bg-white">随机洗牌助手</h1>
                 <p class="px-4">总是怀疑自己洗牌不够随机？游戏中遇到诡异的发牌模式？这个工具可以生成密码学安全的随机排列，并且用便于操作的方式指导你手工按这一排列洗牌。</p>
                 <p class="px-4">开发者：<a class="underline" href="https://0x01.me/">Hypercube</a>，源代码：<a class="underline" href="https://github.com/SmartHypercube/shuffle-helper">github.com/SmartHypercube/shuffle-helper</a>。</p>
-                <form class="flex gap-4" @submit.prevent="generate">
+                <form class="flex flex-wrap gap-4" @submit.prevent="generate">
                     <label class="flex-grow text-xl text-center p-4 rounded-xl border-4 border-green-300 bg-white">牌的数量：<input type="number" id="n-input" class="border-b-2 border-neutral-700" min="1" max="1000" length="4" autofocus required></label>
                     <button type="submit" class="flex-grow text-xl text-center p-4 rounded-xl bg-green-600 text-white">生成随机排列</button>
                 </form>
@@ -30,15 +30,15 @@
                         <p>将所有牌以任意次序分成 {{ output.stacks.length }} 叠，每叠分别有 {{ output.stacks.join('、') }} 张。</p>
                         <p>按以下顺序抽出其中的牌：</p>
                     </div>
-                    <ol class="list-decimal list-inside marker:text-2xl">
+                    <ol v-if="shortMode" class="list-decimal list-inside marker:text-2xl">
                         <li v-for="step in output.steps" class="nth-[5n]:mb-4">
-                            <template v-if="shortMode">
-                                <span class="mx-4"><span class="text-2xl">{{ step.stack + 1 }}</span> / {{ step.stacks }}</span>
-                                <span class="text-2xl">{{ step.card + 1 }}</span> / {{ step.cards }}
-                            </template>
-                            <template v-else>
-                                第 <span class="text-2xl">{{ step.stack + 1 }}</span> 叠（共 {{ step.stacks }} 叠）中的第 <span class="text-2xl">{{ step.card + 1 }}</span> 张（共 {{ step.cards }} 张）
-                            </template>
+                            <span class="mx-4"><span class="text-2xl">{{ step.stack + 1 }}</span> / {{ step.stacks }}</span>
+                            <span class="text-2xl">{{ step.card + 1 }}</span> / {{ step.cards }}
+                        </li>
+                    </ol>
+                    <ol v-else class="list-decimal list-inside marker:text-xl">
+                        <li v-for="step in output.steps" class="nth-[5n]:mb-4">
+                            <span class="text-sm">第 <span class="text-xl">{{ step.stack + 1 }}</span> 叠（共 {{ step.stacks }} 叠）中的第 <span class="text-xl">{{ step.card + 1 }}</span> 张（共 {{ step.cards }} 张）</span>
                         </li>
                     </ol>
                 </div>
