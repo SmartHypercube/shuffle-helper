@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>随机洗牌助手</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.14/dist/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.22/dist/vue.global.min.js"></script>
+    <style>
+        @layer base {
+            button:not(:disabled),
+            [role="button"]:not(:disabled) {
+                cursor: pointer;
+            }
+        }
+    </style>
+    <template id="template">
+        <div class="min-h-lvh w-full bg-gray-100 text-neutral-700 text-pretty break-words hyphens-auto">
+            <div class="w-full max-w-xl flex flex-col p-4 gap-4 mx-auto">
+                <h1 class="text-3xl font-bold text-center p-4 rounded-xl border-4 border-blue-300 bg-white">随机洗牌助手</h1>
+                <p class="px-4">总是怀疑自己洗牌不够随机？游戏中遇到诡异的发牌模式？这个工具可以生成密码学安全的随机排列，并且用便于操作的方式指导你手工按这一排列洗牌。</p>
+                <p class="px-4">开发者：<a class="underline" href="https://0x01.me/">Hypercube</a>，源代码：<a class="underline" href="https://github.com/SmartHypercube/shuffle-helper">github.com/SmartHypercube/shuffle-helper</a>。</p>
+                <form class="flex gap-4" @submit.prevent="generate">
+                    <label class="flex-grow text-xl text-center p-4 rounded-xl border-4 border-green-300 bg-white">牌的数量：<input type="number" id="n-input" class="border-b-2 border-neutral-700" min="1" max="1000" length="4" autofocus required></label>
+                    <button type="submit" class="flex-grow text-xl text-center p-4 rounded-xl bg-green-600 text-white">生成随机排列</button>
+                </form>
+                <div v-if="output" class="p-4 flex flex-col rounded-xl border-4 border-blue-300 bg-white">
+                    <label class="text-xl mb-4"><input type="checkbox" v-model="shortMode" class="text-2xl"> 简洁模式</label>
+                    <div v-if="!shortMode" class="mb-4">
+                        <p>将所有牌以任意次序分成 {{ output.stacks.length }} 叠，每叠分别有 {{ output.stacks.join('、') }} 张。</p>
+                        <p>按以下顺序抽出其中的牌：</p>
+                    </div>
+                    <ol class="list-decimal list-inside marker:text-2xl">
+                        <li v-for="step in output.steps" class="nth-[5n]:mb-4">
+                            <template v-if="shortMode">
+                                <span class="mx-4"><span class="text-2xl">{{ step.stack + 1 }}</span> / {{ step.stacks }}</span>
+                                <span class="text-2xl">{{ step.card + 1 }}</span> / {{ step.cards }}
+                            </template>
+                            <template v-else>
+                                第 <span class="text-2xl">{{ step.stack + 1 }}</span> 叠（共 {{ step.stacks }} 叠）中的第 <span class="text-2xl">{{ step.card + 1 }}</span> 张（共 {{ step.cards }} 张）
+                            </template>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        'use strict';
+        function randomBelow(max) {
+            let array = new Uint32Array(1);
+            let limit = Math.floor(0x100000000 / max) * max;
+            do {
+                crypto.getRandomValues(array);
+            } while (array[0] >= limit);
+            return array[0] % max;
+        }
+        addEventListener('DOMContentLoaded', () => {
+            Vue.createApp({
+                data() {
+                    return {
+                        output: null,
+                        shortMode: false,
+                    };
+                },
+                methods: {
+                    generate() {
+                        let n = parseInt(document.getElementById('n-input').value);
+                        if (isNaN(n) || n < 1 || n > 1000) {
+                            alert('请输入 1 到 1000 之间的整数');
+                            return;
+                        }
+                        location.hash = n;
+                        let stacks = new Array(10).fill(0);
+                        for (let i = 0; i < n; i++) {
+                            stacks[i % 10]++;
+                        }
+                        stacks = stacks.filter(s => s);
+                        const output = { stacks: [...stacks], steps: [] };
+                        while (n) {
+                            let choice = randomBelow(n--);
+                            for (let i = 0; i < stacks.length; i++) {
+                                if (choice < stacks[i]) {
+                                    output.steps.push({ stack: i, stacks: stacks.length, card: choice, cards: stacks[i] });
+                                    stacks[i]--;
+                                    if (stacks[i] === 0) {
+                                        stacks.splice(i, 1);
+                                    }
+                                    break;
+                                } else {
+                                    choice -= stacks[i];
+                                }
+                            }
+                        }
+                        this.output = output;
+                    },
+                },
+                mounted() {
+                    if (document.getElementById('n-input').value === '') {
+                        document.getElementById('n-input').value = location.hash.slice(1) || '54';
+                    }
+                    this.generate();
+                },
+                template: '#template',
+            }).mount('body');
+        });
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
